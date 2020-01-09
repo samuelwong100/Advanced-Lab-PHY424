@@ -21,3 +21,5 @@ sigma_cal_y=0.02
 
 #convert to (x,y) unit using the formula:
 # unit = measured*scale*(calibration units/calibration)
+x = x_meas*scale*(25/calibration_x)
+y = y_meas*scale*(25/calibration_y)
