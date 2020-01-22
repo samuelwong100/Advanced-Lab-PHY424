@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-File Name: data_analysis_exercise.py
+File Name: process_data.py
 Purpose: data analysis exercise
 Author: Samuel Wong
 """

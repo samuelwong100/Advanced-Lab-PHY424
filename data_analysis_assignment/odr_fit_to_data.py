@@ -66,7 +66,7 @@ import scipy.odr, scipy.special, scipy.stats
 Run_Monte_Carlo_CDF_Estimator = True
 # The default is set to just 11, so all the examples will run quickly
 #    in a few seconds. For serious work, this should be much larger.
-Number_of_MC_iterations       = 77
+Number_of_MC_iterations       = 300
 
 # You can ignore x uncertainties if desired
 x_uncertainties_ignored = False
@@ -119,9 +119,28 @@ def Cubic(p,x) :
     #   Curvature                    : p[2]
     #   3rd Order coefficient        : p[3]
     return p[0]+p[1]*x+p[2]*x**2+p[3]*x**3
+def Lorentzian(p,x):
+    y_mu = p[0]
+    mu = p[1]
+    sigma = p[2]
+    return y_mu/(1+ (x-mu)**2/sigma**2)
+def Log_Normal(p,x):
+    y_mu = p[0]
+    mu = p[1]
+    sigma = p[2]
+    denominator = 2*sigma**2
+    numerator = -(numpy.log(x) - numpy.log(mu))**2
+    return y_mu*numpy.exp(numerator/denominator)
+def Sinc(p,x):
+    y_mu = p[0]
+    mu = p[1]
+    sigma = p[2]
+    numerator = numpy.sin((x-mu)/sigma)
+    denominator = (x-mu)/sigma
+    return y_mu*numpy.abs(numerator/denominator)
 
 ## Choose function and data to fit:
-func = Semicircle
+func = Sinc
 if func.__name__ == "Gauss" :
     # Initial guesses for fit parameters
     p_guess   = (10.,400.,1173.9,0.4,)
@@ -159,6 +178,21 @@ elif func.__name__ == "Cubic" :
     data_file = "cubic_data.txt"
     x_label   = "x"
     y_label   = "y"
+elif func.__name__ == "Lorentzian":
+    p_guess = (30,30,10)
+    data_file = "ellipse_data.txt"
+    x_label = "x"
+    y_label = "y"
+elif func.__name__ == "Log_Normal":
+    p_guess = (100,30,20)
+    data_file = "ellipse_data.txt"
+    x_label = "x"
+    y_label = "y"
+elif func.__name__ == "Sinc":
+    p_guess = (100,24,4)
+    data_file = "ellipse_data.txt"
+    x_label = "x"
+    y_label = "y"
 else :
     # default is linear
     func=Linear
@@ -419,6 +453,7 @@ pyplot.ticklabel_format(style='plain', useOffset=False, axis='x')
 pyplot.ylabel(y_label)
 
 residuals.grid()
+pyplot.savefig(func.__name__+"_Fit_Outlier_Adjusted.png")
 
 pyplot.show()
 

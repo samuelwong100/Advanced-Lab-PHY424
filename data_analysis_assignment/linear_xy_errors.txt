@@ -1,0 +1,22 @@
+# linear_xy_errors.dat
+#  
+# Rather ugly data generated from
+#        background = 1
+#        slope      = 1.
+#        def function(x) :
+#            return background + slope*x
+# With data smeared by x and y uncertainties as listed below.
+#
+# Generated 24 September 2011 
+#   by David Bailey http://www.physics.utoronto.ca/~dbailey/
+# Released under the MIT License (www.opensource.org/licenses/mit-license.php)
+#
+#     x         dx            y            dy
+ 0.311097     0.161431     1.08203      0.157069   
+ 0.509849     0.279167     1.33718      0.176511   
+ 0.55769      0.280651     1.66589      0.167629   
+ 0.542713     0.263467     1.49552      0.179114   
+ 1.59388      0.293088     2.03023      0.15959    
+ 0.856422     0.216246     2.37483      0.13003    
+ 1.71012      0.206074     2.57346      0.187299   
+ 1.71         0.202373     2.69861      0.179835   
