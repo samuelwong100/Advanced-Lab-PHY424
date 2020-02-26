@@ -6,7 +6,7 @@ Author: Samuel Wong
 """
 import numpy as np
 import matplotlib.pyplot as plt
-from my_odr_fit import my_odr_fit
+from scipy.optimize import curve_fit
 
 def load(file):
     data = np.loadtxt(file)
@@ -16,13 +16,22 @@ def load(file):
 
 def load_adjusted(file):
     channel, counts = load(file)
-    counts = counts - noise
+    counts = np.abs(counts - noise)
     return counts
 
 def plot(channel,counts,title):
     plt.figure()
     plt.title(title)
     plt.scatter(channel,counts)
+    plt.savefig(title+".png")
+    plt.show()
+    
+def plot_with_error_bar(channel,counts,error,title):
+    plt.figure()
+    plt.title(title)
+    plt.errorbar(x=channel,y=counts,yerr=error,ecolor='r',fmt='o',markersize=1)
+    plt.ylabel('Counts (error=$\sqrt{N}$)')
+    plt.xlabel('Channels')
     plt.savefig(title+".png")
     plt.show()
     
@@ -33,12 +42,22 @@ def load_and_plot(file,title):
 
 def load_adjusted_and_plot(file,title):
     counts = load_adjusted(file)
-    plot(channel,counts,title)
-    return counts
+    counts[0:410] = 0
+    counts[600:] = 0
+    uncertainty = np.sqrt(counts)
+    plot_with_error_bar(channel,counts,uncertainty,title)
+    return counts, uncertainty
 
+def gaussian(x,a,b,c):
+    return a*np.exp(-((x-b)**2)/(2*c**2))
+    
+    
 #load and plot the noise counts
 channel, noise = load_and_plot("data/noise.txt","noise")
 #load and plot counts for different absorbers with noise subtracted
-alum1 = load_adjusted_and_plot("data/aluminum#1.txt","aluminum#1")
-                               
+alum1, d_alum1 = load_adjusted_and_plot("data/aluminum#1.txt","aluminum#1")
+                         
+
+popt, pcov = curve_fit(gaussian, xdata=channel, ydata=alum1, sigma=d_alum1, 
+                       p0=(150,540,20), maxfev=20000)                
 
