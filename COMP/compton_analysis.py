@@ -162,6 +162,12 @@ def get_final_cross_section_low_Z(sigma_tot,d_sigma_tot,Z):
     sigma = sigma_tot/Z
     d_sigma = sigma* (d_sigma_tot/sigma_tot)
     return sigma, d_sigma
+
+def get_final_cross_section_high_Z(sigma_tot,d_sigma_tot,Z):
+    #using the formula sigma_tot = Z*sigma + p*Z**(4.2)
+    sigma = (sigma_tot - p*(Z**4.2))/Z
+    d_sigma = sigma* (d_sigma_tot/sigma_tot)
+    return sigma, d_sigma
     
 def extract_electron_radius(sigma,d_sigma):
     #use the formula sigma = 2*pi*(r**2)*Klein_Ninshima_factor
@@ -194,9 +200,20 @@ def get_inverse_alpha(alpha,d_alpha):
     d_inverse_alpha = (1/alpha**2)*d_alpha 
     return inverse_alpha, d_inverse_alpha
 
+def sigma_total_model(Z,p):
+    gamma = 0.6617/0.511 #energy of gamma ray in unit of electron mass
+    A = (1+gamma)/gamma**2
+    B = 2*(1+gamma)/(1+2*gamma)
+    L = np.log(1+2*gamma)/gamma
+    C = (1+3*gamma)/(1+2*gamma)**2
+    Klein_Ninshima_factor = A*(B-L)+L/2-C
+    r = 2.812*(10**(-15)) #classical electron radius given in lab manual
+    sigma = 2*np.pi*(r**2)*Klein_Ninshima_factor
+    sigma_tot = p*Z**(4.2) + Z*sigma
+    return sigma_tot
 
 def analyze_element(I,dI,measurement_file,I_plot_max,Element_name,
-                    molar_mass,Z):
+                    molar_mass,Z,high_Z=False):
     #get all experimental measurements from textfile
     #in units of gram, mm, and mm, respectively
     m,dm,x,dx,diam,d_diam = get_measurements(measurement_file)
@@ -225,7 +242,10 @@ def analyze_element(I,dI,measurement_file,I_plot_max,Element_name,
     d_sigma_tot = d_sigma_tot*(10**-6)
     print('sigma_tot =',sigma_tot,'+/-',d_sigma_tot, 'm^2')
     #use formula for low Z, where we can ignore photoelectric effect
-    sigma, d_sigma = get_final_cross_section_low_Z(sigma_tot,d_sigma_tot,Z)
+    if high_Z:
+        sigma, d_sigma = get_final_cross_section_high_Z(sigma_tot,d_sigma_tot,Z)
+    else:
+        sigma, d_sigma = get_final_cross_section_low_Z(sigma_tot,d_sigma_tot,Z)
     print('sigma = ',sigma,'+/-',d_sigma,'m^2')
     #extract classical electron radius from Klein_Nishima formula
     r_electron, d_r_electron = extract_electron_radius(sigma,d_sigma)
@@ -329,3 +349,57 @@ dI = np.array([dcopper1,dcopper2,dcopper3,dcopper4,dcopper5])
 analyze_element(I,dI,measurement_file = "copper_measurements.txt",
                 I_plot_max=5000,Element_name="Copper",molar_mass=63.546,
                 Z=29)
+
+print("===================Photoelectric Coefficient Analysis=================")
+#we are given that for large Z, the photoelectric contribution to the cross
+#section starts to matter, and that sigma_photoelectric is proportioanl to 
+#Z^(4.2).
+#Then we can write sigma_pe = p Z^(4.2), where 'p' is the photoelectric
+#coefficient for its contribution to the cross section. To analyze the data
+#for high Z element such as lead, we need to find p first. I will now proceed
+#to estimate 'p' from the data of copper, carbon, and aluminum, using the known
+#ideal value of alpha=1/137
+#First, note that if we set alpha=1/137, then the Compton cross section is the
+#same for all 3 elements. In the equation,
+#sigma_total = p Z^(4.2) + Z sigma,
+#if sigma is a constant, and we have 3 pairs of (Z,sigma_total) for 3 elements,
+#we can get a fit to extract p. This is exactly what I will do in the following.
+Z = np.array([6,13,29,82]) #carbon, aluminum, copper, lead
+#sigma_tot in m^2, copied from output of above sections
+sigma_tot = np.array([1.463*10**(-28),3*10**(-28),7.0699*10**(-28),3.05*10**(-27)])
+popt, pcov = curve_fit(sigma_total_model,xdata=Z,ydata=sigma_tot)
+plt.figure()
+plt.title("Total Cross Section Versus Atomic Number")
+plt.scatter(Z,sigma_tot)
+Z_array = np.linspace(0,90,1000)
+plt.plot(Z_array,sigma_total_model(Z_array,*popt))
+plt.ylim(0,5*10**(-27))
+plt.ylabel("sigma_tot")
+plt.xlabel("Z")
+plt.savefig("Total Cross Section Versus Atomic Number.png")
+plt.show()
+#set global constant p
+p = popt[0]
+
+print("===================Lead Analysis============================")
+#load and plot different absorbers with noise subtracted and integrate the 
+#total counts, get the total counts and its uncertainty
+#lead1, dlead1 = load_fitted_plot_integrate(
+#        "lead#1.txt","lead#1",(20,510,10,0))
+#print(lead1, '+/-', dlead1)
+lead2, dlead2 = load_fitted_plot_integrate(
+        "lead#2.txt","lead#2",(160,510,10,0))
+print(lead2, '+/-', dlead2)
+lead3, dlead3 = load_fitted_plot_integrate(
+        "lead#3.txt","lead#3",(160,510,10,0))
+print(lead3, '+/-', dlead3)
+lead4, dlead4 = load_fitted_plot_integrate(
+        "lead#4.txt","lead#4",(160,510,10,0))
+print(lead4, '+/-', dlead4)
+#collect all integral photon counts into an array, ordered by their
+#experimental label number
+I = np.array([lead2,lead3,lead4])
+dI = np.array([dlead2,dlead3,dlead4])
+analyze_element(I,dI,measurement_file = "lead_measurements.txt",
+                I_plot_max=4000,Element_name="lead",molar_mass=207.2,
+                Z=82,high_Z=True)
