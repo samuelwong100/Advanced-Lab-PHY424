@@ -201,14 +201,15 @@ def get_inverse_alpha(alpha,d_alpha):
     return inverse_alpha, d_inverse_alpha
 
 def sigma_total_model(Z,p):
-    gamma = 0.6617/0.511 #energy of gamma ray in unit of electron mass
-    A = (1+gamma)/gamma**2
-    B = 2*(1+gamma)/(1+2*gamma)
-    L = np.log(1+2*gamma)/gamma
-    C = (1+3*gamma)/(1+2*gamma)**2
-    Klein_Ninshima_factor = A*(B-L)+L/2-C
-    r = 2.812*(10**(-15)) #classical electron radius given in lab manual
-    sigma = 2*np.pi*(r**2)*Klein_Ninshima_factor
+#    gamma = 0.6617/0.511 #energy of gamma ray in unit of electron mass
+#    A = (1+gamma)/gamma**2
+#    B = 2*(1+gamma)/(1+2*gamma)
+#    L = np.log(1+2*gamma)/gamma
+#    C = (1+3*gamma)/(1+2*gamma)**2
+#    Klein_Ninshima_factor = A*(B-L)+L/2-C
+#    r = 2.812*(10**(-15)) #classical electron radius given in lab manual
+#    sigma = 2*np.pi*(r**2)*Klein_Ninshima_factor
+    sigma = (2.437+2.439+2.312)*10**(-29)/3 #average of the 3 lowZ sigma
     sigma_tot = p*Z**(4.2) + Z*sigma
     return sigma_tot
 
@@ -357,14 +358,14 @@ print("===================Photoelectric Coefficient Analysis=================")
 #Then we can write sigma_pe = p Z^(4.2), where 'p' is the photoelectric
 #coefficient for its contribution to the cross section. To analyze the data
 #for high Z element such as lead, we need to find p first. I will now proceed
-#to estimate 'p' from the data of copper, carbon, and aluminum, using the known
-#ideal value of alpha=1/137
-#First, note that if we set alpha=1/137, then the Compton cross section is the
-#same for all 3 elements. In the equation,
+#to estimate 'p' from the data of copper, carbon, and aluminum
+#First, note that since we already calculated sigma without the photoelectric 
+#effect for the 3 low-Z elements, we can take the average and treat sigma 
+#as a constant. Then we in the equation,
 #sigma_total = p Z^(4.2) + Z sigma,
 #if sigma is a constant, and we have 3 pairs of (Z,sigma_total) for 3 elements,
 #we can get a fit to extract p. This is exactly what I will do in the following.
-Z = np.array([6,13,29,82]) #carbon, aluminum, copper, lead
+Z = np.array([6,13,29,82]) #carbon, aluminum, copper
 #sigma_tot in m^2, copied from output of above sections
 sigma_tot = np.array([1.463*10**(-28),3*10**(-28),7.0699*10**(-28),3.05*10**(-27)])
 popt, pcov = curve_fit(sigma_total_model,xdata=Z,ydata=sigma_tot)
@@ -380,6 +381,7 @@ plt.savefig("Total Cross Section Versus Atomic Number.png")
 plt.show()
 #set global constant p
 p = popt[0]
+print("p=",p)
 
 print("===================Lead Analysis============================")
 #load and plot different absorbers with noise subtracted and integrate the 
