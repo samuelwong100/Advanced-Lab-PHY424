@@ -365,17 +365,18 @@ print("===================Photoelectric Coefficient Analysis=================")
 #sigma_total = p Z^(4.2) + Z sigma,
 #if sigma is a constant, and we have 3 pairs of (Z,sigma_total) for 3 elements,
 #we can get a fit to extract p. This is exactly what I will do in the following.
-Z = np.array([6,13,29,82]) #carbon, aluminum, copper
+Z = np.array([6,13,29,82]) #carbon, aluminum, copper,lead
 #sigma_tot in m^2, copied from output of above sections
 sigma_tot = np.array([1.463*10**(-28),3*10**(-28),7.0699*10**(-28),3.05*10**(-27)])
+sigma_tot_error = np.array([2.58e-30,7.35e-30,5.91e-30,1.41e-28])
 popt, pcov = curve_fit(sigma_total_model,xdata=Z,ydata=sigma_tot)
 plt.figure()
 plt.title("Total Cross Section Versus Atomic Number")
-plt.scatter(Z,sigma_tot)
+plt.errorbar(x=Z,y=sigma_tot,yerr=sigma_tot_error,fmt='o')
 Z_array = np.linspace(0,90,1000)
 plt.plot(Z_array,sigma_total_model(Z_array,*popt))
 plt.ylim(0,5*10**(-27))
-plt.ylabel("sigma_tot")
+plt.ylabel("$\sigma_{tot} (m^2)$")
 plt.xlabel("Z")
 plt.savefig("Total Cross Section Versus Atomic Number.png")
 plt.show()
